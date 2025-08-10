@@ -1,0 +1,18 @@
+Flask==1.1.2
+flask-mysqldb==0.2.0
+flask-fontawesome==0.1.5
+Jinja2==3.0.3
+Werkzeug==1.0.1
+itsdangerous==2.0.1
+click==7.1.2
+
+# WSGI server
+gunicorn==20.1.0
+
+# mysql client binding required by flask-mysqldb
+mysqlclient==2.1.1
+
+# Testing (dev)
+pytest==7.4.0
+pytest-flask==1.2.0
+
