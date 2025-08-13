@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-configmap
+  namespace: flask-app
+  labels:
+    app: flask-backend
+    env: dev
+data:
+  MYSQL_HOST: "mysql-service.flask-app.svc.cluster.local"
+  MYSQL_USER: "root"
+  MYSQL_DB: "python_crud"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: flask-secret
+  namespace: flask-app
+type: Opaque
+data:
+  MYSQL_PASSWORD: "cm9vdA=="   # base64 for "root"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-backend-deployment
+  namespace: flask-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-backend
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: flask-backend
+        version: v1
+        env: dev
+    spec:
+      containers:
+      - name: flask-backend-container
+        image: joamal/crudapp:latest
+        ports:
+          - containerPort: 5000
+        env:
+          - name: MYSQL_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: flask-configmap
+                key: MYSQL_HOST
+          - name: MYSQL_USER
+            valueFrom:
+              configMapKeyRef:
+                name: flask-configmap
+                key: MYSQL_USER
+          - name: MYSQL_DB
+            valueFrom:
+              configMapKeyRef:
+                name: flask-configmap
+                key: MYSQL_DB
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: flask-secret
+                key: MYSQL_PASSWORD
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-backend-service
+  namespace: flask-app
+  labels:
+    app: flask-backend
+    version: v1
+spec:
+  type: NodePort
+  ports:
+    - port: 5000
+      protocol: TCP
+      targetPort: 5000
+      nodePort: 30080
+  selector:
+    app: flask-backend
+    version: v1

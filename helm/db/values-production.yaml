@@ -1,0 +1,34 @@
+namespace: production
+labels:
+  app: mysql
+  env: production
+  version: v1
+
+replicaCount: 1
+
+image:
+  repository: mysql
+  tag: "8.0"
+  pullPolicy: IfNotPresent
+
+container:
+  name: mysql
+  port: 3306
+
+mysql:
+  rootPassword: root
+  database: python_crud
+  user: appuser
+  password: apppassword
+
+service:
+  name: mysql-service
+  type: ClusterIP
+  port: 3306
+
+pvc:
+  name: mysql-pvc-production
+  storage: 5Gi
+
+deployment:
+  name: mysql-deployment

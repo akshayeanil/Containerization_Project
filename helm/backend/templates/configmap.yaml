@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configmap.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.labels.app }}
+    env: {{ .Values.labels.env }}
+data:
+  MYSQL_HOST: "{{ .Values.mysql.host }}"
+  MYSQL_USER: "{{ .Values.mysql.user }}"
+  MYSQL_DB: "{{ .Values.mysql.database }}"

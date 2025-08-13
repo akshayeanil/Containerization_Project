@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-configmap
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.labels.app }}
+    env: {{ .Values.labels.env }}
+data:
+  MYSQL_DATABASE: "{{ .Values.mysql.database }}"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: {{ .Values.namespace }}
+type: Opaque
+data:
+  MYSQL_ROOT_PASSWORD: {{ .Values.mysql.rootPassword | b64enc }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.labels.app }}
+      version: {{ .Values.labels.version }}
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        env: {{ .Values.labels.env }}
+        app: {{ .Values.labels.app }}
+        version: {{ .Values.labels.version }}
+    spec:
+      containers:
+      - name: mysql-container
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+          - containerPort: {{ .Values.container.port }}
+        envFrom:
+          - configMapRef:
+              name: mysql-configmap
+          - secretRef:
+              name: mysql-secret
+        volumeMounts:
+          - name: mysql-storage
+            mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-storage
+          emptyDir: {} # Replace with PVC for production
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.labels.app }}
+    version: {{ .Values.labels.version }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.port }}
+      protocol: TCP
+      targetPort: {{ .Values.container.port }}
+  selector:
+    app: {{ .Values.labels.app }}
+    version: {{ .Values.labels.version }}

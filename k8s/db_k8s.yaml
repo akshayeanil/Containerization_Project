@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-configmap
+  labels:
+    app: mysql
+    env: dev
+  namespace: flask-app
+data:
+  MYSQL_DATABASE: "python_crud"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: flask-app
+type: Opaque
+data:
+  MYSQL_ROOT_PASSWORD: "cm9vdA=="   # base64 for "root"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  namespace: flask-app
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+      version: v1
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        env: dev
+        app: mysql
+        version: v1
+    spec:
+      containers:
+      - name: mysql-container
+        image: mysql:8.0
+        ports:
+          - containerPort: 3306
+        envFrom:
+          - configMapRef:
+              name: mysql-configmap
+          - secretRef:
+              name: mysql-secret
+        volumeMounts:
+          - name: mysql-storage
+            mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-storage
+          emptyDir: {} # Replace with PersistentVolumeClaim for production
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  labels:
+    app: mysql
+    version: v1
+  namespace: flask-app
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3306
+      protocol: TCP
+      targetPort: 3306
+  selector:
+    app: mysql
+    version: v1
