@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+    environment {
+        DOCKERHUB_CREDENTIALS = 'dockerhub-credentials'
+        GITHUB_CREDENTIALS = 'github-credentials'
+        IMAGE_NAME = 'joamal/crudapp'
+        NAMESPACE = 'staging'
+        HELM_VALUES = 'helm/backend/values-staging.yaml'
+        HELM_CHART = 'helm/backend'
+        ARGOCD_APP = 'backend-staging'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'develop', url: 'https://github.com/akshayeanil/Containerization_Project.git', credentialsId: GITHUB_CREDENTIALS
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${IMAGE_NAME}:staging")
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
+                        docker.image("${IMAGE_NAME}:staging").push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy via Helm') {
+            steps {
+                sh """
+                helm upgrade --install backend-staging ${HELM_CHART} \
+                  -f ${HELM_VALUES} \
+                  --namespace ${NAMESPACE}
+                """
+            }
+        }
+
+        stage('Sync ArgoCD') {
+            steps {
+                sh """
+                argocd app sync ${ARGOCD_APP}
+                """
+            }
+        }
+    }
+}
