@@ -19,7 +19,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${IMAGE_NAME}:staging")
+                    // Build Docker image using backend/ folder as context
+                    docker.build("${IMAGE_NAME}:staging", "backend")
                 }
             }
         }
