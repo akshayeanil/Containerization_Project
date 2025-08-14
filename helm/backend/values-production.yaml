@@ -4,7 +4,7 @@ labels:
   version: v1
   env: production
 
-replicaCount: 1
+replicaCount: 2
 
 image:
   repository: joamal/crudapp
