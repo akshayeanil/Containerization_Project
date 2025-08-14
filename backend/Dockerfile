@@ -1,11 +1,6 @@
 # backend/Dockerfile
 FROM python:3.10-slim
 
-# Avoid prompts, keep Python output unbuffered
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
 WORKDIR /app
 
 # Install system deps required to compile mysqlclient
